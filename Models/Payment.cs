@@ -11,5 +11,8 @@ namespace SportCenter.Models
         public DateTime PaymentDate { get; set; }
         public string PaymentMethod { get; set; }
         public string Description { get; set; }
+
+        // Navigation property
+        public virtual Member Member { get; set; }
     }
 }

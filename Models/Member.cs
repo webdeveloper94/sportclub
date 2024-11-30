@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SportCenter.Models
 {
@@ -12,5 +13,16 @@ namespace SportCenter.Models
         public DateTime RegistrationDate { get; set; }
         public bool IsActive { get; set; }
         public string Address { get; set; }
+        public int? TrainerId { get; set; }
+        public virtual Trainer Trainer { get; set; }
+        public virtual ICollection<ActiveSession> ActiveSessions { get; set; }
+        public virtual ICollection<Payment> Payments { get; set; }
+        public virtual ICollection<Session> Sessions { get; set; }
+
+        public Member()
+        {
+            Payments = new List<Payment>();
+            Sessions = new List<Session>();
+        }
     }
 }

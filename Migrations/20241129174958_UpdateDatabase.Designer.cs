@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SportCenter.Data;
 
@@ -10,9 +11,11 @@ using SportCenter.Data;
 namespace SportCenter.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241129174958_UpdateDatabase")]
+    partial class UpdateDatabase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
@@ -45,30 +48,36 @@ namespace SportCenter.Migrations
                     b.ToTable("ActiveSessions");
                 });
 
-            modelBuilder.Entity("SportCenter.Models.Equipment", b =>
+            modelBuilder.Entity("SportCenter.Models.Employee", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Description")
+                    b.Property<string>("FirstName")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
+                    b.Property<DateTime>("HireDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("Price")
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastName")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("PurchaseDate")
+                    b.Property<string>("PhoneNumber")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Status")
+                    b.Property<string>("Position")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Salary")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Equipment");
+                    b.ToTable("Employees");
                 });
 
             modelBuilder.Entity("SportCenter.Models.Member", b =>
@@ -98,12 +107,7 @@ namespace SportCenter.Migrations
                     b.Property<DateTime>("RegistrationDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("TrainerId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("TrainerId");
 
                     b.ToTable("Members");
                 });
@@ -134,8 +138,6 @@ namespace SportCenter.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MemberId");
-
                     b.ToTable("Payments");
                 });
 
@@ -159,61 +161,41 @@ namespace SportCenter.Migrations
                     b.ToTable("Prices");
                 });
 
-            modelBuilder.Entity("SportCenter.Models.Session", b =>
+            modelBuilder.Entity("SportCenter.Models.Subscription", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("EndTime")
+                    b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("MemberId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Notes")
+                    b.Property<decimal>("Price")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("StartTime")
+                    b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Status")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.HasIndex("MemberId");
 
-                    b.ToTable("Sessions");
-                });
-
-            modelBuilder.Entity("SportCenter.Models.Trainer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Age")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("FirstName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("MonthlyFee")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Trainers");
+                    b.ToTable("Subscriptions");
                 });
 
             modelBuilder.Entity("SportCenter.Models.ActiveSession", b =>
                 {
                     b.HasOne("SportCenter.Models.Member", "Member")
-                        .WithMany("ActiveSessions")
+                        .WithMany()
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -221,50 +203,15 @@ namespace SportCenter.Migrations
                     b.Navigation("Member");
                 });
 
-            modelBuilder.Entity("SportCenter.Models.Member", b =>
-                {
-                    b.HasOne("SportCenter.Models.Trainer", "Trainer")
-                        .WithMany("Members")
-                        .HasForeignKey("TrainerId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Trainer");
-                });
-
-            modelBuilder.Entity("SportCenter.Models.Payment", b =>
+            modelBuilder.Entity("SportCenter.Models.Subscription", b =>
                 {
                     b.HasOne("SportCenter.Models.Member", "Member")
-                        .WithMany("Payments")
+                        .WithMany()
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Member");
-                });
-
-            modelBuilder.Entity("SportCenter.Models.Session", b =>
-                {
-                    b.HasOne("SportCenter.Models.Member", "Member")
-                        .WithMany("Sessions")
-                        .HasForeignKey("MemberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Member");
-                });
-
-            modelBuilder.Entity("SportCenter.Models.Member", b =>
-                {
-                    b.Navigation("ActiveSessions");
-
-                    b.Navigation("Payments");
-
-                    b.Navigation("Sessions");
-                });
-
-            modelBuilder.Entity("SportCenter.Models.Trainer", b =>
-                {
-                    b.Navigation("Members");
                 });
 #pragma warning restore 612, 618
         }
