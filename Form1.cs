@@ -11,7 +11,8 @@ namespace SportCenter
     public partial class Form1 : Form
     {
         private MenuStrip menuStrip;
-        private ToolStripMenuItem membersMenu, subscriptionsMenu, paymentsMenu, employeesMenu, reportsMenu, settingsMenu;
+        private ToolStripMenuItem membersMenu, employeesMenu, reportsMenu, settingsMenu;
+        private ToolStripMenuItem equipmentMenu;
         private DataGridView dgvActiveSessions;
         private Button btnEndSession;
         private Label lblActiveSessions;
@@ -25,6 +26,7 @@ namespace SportCenter
             InitializeTimer();
             LoadActiveSessions();
             this.FormClosing += OnFormClosing;
+            
         }
 
         private void InitializeTimer()
@@ -53,7 +55,7 @@ namespace SportCenter
         private void InitializeComponent()
         {
             // Form settings
-            this.Size = new System.Drawing.Size(1200, 800);
+            this.WindowState = FormWindowState.Maximized;
             this.Text = "Sport Center";
             this.StartPosition = FormStartPosition.CenterScreen;
 
@@ -86,12 +88,12 @@ namespace SportCenter
             membersMenu.DropDownItems.AddRange(new ToolStripItem[] { newMemberMenu, memberListMenu });
 
             // Settings Menu
-            settingsMenu = new ToolStripMenuItem("Settings");
-            var priceSettingsMenu = new ToolStripMenuItem("Price Management", null, OnPriceSettingsClick);
+            settingsMenu = new ToolStripMenuItem("Sozlash");
+            var priceSettingsMenu = new ToolStripMenuItem("Narxlar", null, OnPriceSettingsClick);
             settingsMenu.DropDownItems.Add(priceSettingsMenu);
 
             // Equipment Menu
-            var equipmentMenu = new ToolStripMenuItem("Jihozlar");
+            equipmentMenu = new ToolStripMenuItem("Jihozlar");
             equipmentMenu.Click += (s, e) =>
             {
                 using (var equipmentForm = new EquipmentForm())
@@ -101,8 +103,6 @@ namespace SportCenter
             };
 
             // Other Menus
-            subscriptionsMenu = new ToolStripMenuItem("Subscriptions");
-            paymentsMenu = new ToolStripMenuItem("Payments");
             employeesMenu = new ToolStripMenuItem("Trenerlar");
             employeesMenu.Click += (s, e) => 
             {
@@ -121,7 +121,7 @@ namespace SportCenter
             };
 
             menuStrip.Items.AddRange(new ToolStripItem[] { 
-                membersMenu, subscriptionsMenu, paymentsMenu, employeesMenu, reportsMenu, settingsMenu, equipmentMenu 
+                membersMenu, employeesMenu, reportsMenu, settingsMenu, equipmentMenu 
             });
 
             // Active Sessions Label
@@ -134,7 +134,7 @@ namespace SportCenter
             // Active Sessions DataGridView
             dgvActiveSessions = new DataGridView();
             dgvActiveSessions.Location = new System.Drawing.Point(10, 70);
-            dgvActiveSessions.Size = new System.Drawing.Size(1160, 600);
+            dgvActiveSessions.Size = new System.Drawing.Size(1160, 500);
             dgvActiveSessions.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvActiveSessions.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvActiveSessions.MultiSelect = false;
@@ -145,13 +145,13 @@ namespace SportCenter
             // End Session Button
             btnEndSession = new Button();
             btnEndSession.Text = "Mashg'ulotni yakunlash";
-            btnEndSession.Location = new System.Drawing.Point(10, 680);
-            btnEndSession.Size = new System.Drawing.Size(150, 30);
+            btnEndSession.Location = new System.Drawing.Point(10, 580);
+            btnEndSession.Size = new System.Drawing.Size(150, 35);
             btnEndSession.Click += BtnEndSession_Click;
-            btnEndSession.BackColor = System.Drawing.Color.FromArgb(0, 122, 204);
+            btnEndSession.BackColor = System.Drawing.Color.FromArgb(0, 150, 136);
             btnEndSession.ForeColor = System.Drawing.Color.White;
             btnEndSession.FlatStyle = FlatStyle.Flat;
-            btnEndSession.Cursor = Cursors.Hand;
+            btnEndSession.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
 
             // Add controls to form
             this.Controls.Clear();
@@ -231,38 +231,54 @@ namespace SportCenter
 
         private void BtnEndSession_Click(object sender, EventArgs e)
         {
-            if (dgvActiveSessions.SelectedRows.Count > 0)
+            try
             {
-                var sessionId = (int)dgvActiveSessions.SelectedRows[0].Cells["Id"].Value;
-                var session = _context.ActiveSessions
-                    .Include(s => s.Member)
-                    .FirstOrDefault(s => s.Id == sessionId);
-
-                if (session != null)
+                if (dgvActiveSessions.SelectedRows.Count > 0)
                 {
-                    session.EndTime = DateTime.Now;
-                    
-                    var price = _context.Prices.OrderByDescending(p => p.LastUpdated).First();
-                    decimal amount = session.EndTime.Value.Subtract(session.StartTime).Hours * price.HourlyPrice;
-                    
-                    using (var paymentForm = new PaymentForm(session.Member, amount))
+                    var sessionId = (int)dgvActiveSessions.SelectedRows[0].Cells["Id"].Value;
+                    var session = _context.ActiveSessions
+                        .Include(s => s.Member)
+                        .FirstOrDefault(s => s.Id == sessionId);
+
+                    if (session != null)
                     {
-                        if (paymentForm.ShowDialog() == DialogResult.OK)
+                        var endTime = DateTime.Now;
+                        var duration = endTime.Subtract(session.StartTime);
+                        var price = _context.Prices.OrderByDescending(p => p.LastUpdated).FirstOrDefault();
+                        
+                        if (price == null)
                         {
-                            _context.SaveChanges();
-                            LoadActiveSessions();
+                            MessageBox.Show("Narxlar topilmadi. Iltimos, avval narxlarni sozlang!", 
+                                "Xato", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
                         }
-                        else
+
+                        // Daqiqalar bo'yicha narx hisoblash
+                        decimal minutePrice = price.HourlyPrice / 60; // Bir daqiqa narxi
+                        int totalMinutes = (int)Math.Ceiling(duration.TotalMinutes); // Umumiy daqiqalar
+                        decimal amount = minutePrice * totalMinutes;
+
+                        using (var paymentForm = new PaymentForm(session.Member, amount))
                         {
-                            session.EndTime = null;
+                            if (paymentForm.ShowDialog() == DialogResult.OK)
+                            {
+                                session.EndTime = endTime;
+                                _context.SaveChanges();
+                                LoadActiveSessions();
+                            }
                         }
                     }
                 }
+                else
+                {
+                    MessageBox.Show("Iltimos, yakunlamoqchi bo'lgan mashg'ulotni tanlang!", 
+                        "Ogohlantirish", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Iltimos, yakunlamoqchi bo'lgan mashg'ulotni tanlang!", 
-                    "Ogohlantirish", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show($"Mashg'ulotni yakunlashda xatolik yuz berdi: {ex.Message}", 
+                    "Xato", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

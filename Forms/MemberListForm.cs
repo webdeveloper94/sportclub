@@ -76,7 +76,7 @@ namespace SportCenter.Forms
             btnDelete.Click += new EventHandler(btnDelete_Click);
 
             btnStartSession = new Button();
-            btnStartSession.Text = "Mashg'ulotni boshlash";
+            btnStartSession.Text = "Boshlash";
             btnStartSession.Location = new System.Drawing.Point(255, 0);
             btnStartSession.Size = new System.Drawing.Size(150, 30);
             btnStartSession.Click += new EventHandler(btnStartSession_Click);
